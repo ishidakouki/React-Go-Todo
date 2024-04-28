@@ -188,9 +188,6 @@ curl -i --request GET 'http://localhost:3001/v1/transfers'
 ]
 ```
 
-## Git workflow
-- Gitflow
-
 ## Code status
 - Development
 
