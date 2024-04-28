@@ -2,13 +2,13 @@ version: "3.7"
 
 services:
   app:
-    container_name: "go-clean-architecture"
+    container_name: "react-go-todo"
     build:
       context: .
       dockerfile: Dockerfile
       target: development
     ports:
-      - "3001:3001"
+      - "9230:9230"
     volumes:
       - ./:/app
       - $GOPATH/pkg/mod/cache:/go/pkg/mod/cache
@@ -17,63 +17,49 @@ services:
     networks:
       - main
     depends_on:
-      - mongodb-primary
-      - postgres
+      - react-go-todo-mysql
+      - react-go-todo-redis
 
-  postgres:
-    container_name: "postgres"
-    image: "postgres:12.2-alpine"
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: bank
+  react-go-todo-mysql:
+    platform: linux/amd64
+    container_name: react-go-todo-mysql
+    image: mysql:8.0
     volumes:
-      - ./_scripts/postgres:/docker-entrypoint-initdb.d
-    networks:
-      - main
-
-  mongodb-primary:
-    container_name: mongodb-primary
-    image: 'docker.io/bitnami/mongodb:4.4-debian-10'
+      - mysql-data:/var/lib/mysql
+      - ./compose/my.cnf:/etc/mysql/conf.d/my.cnf
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+      TZ: 'Asia/Tokyo'
+      MYSQL_DATABASE: $MYSQL_DATABASE
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
+      MYSQL_ROOT_USER: $MYSQL_ROOT_USER
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+    expose:
+      - "1234"
+    cap_add:
+      - SYS_NICE
     ports:
-      - "27017:27017"
+      - "1234:5678"
+    restart: "no"
     networks:
       - main
 
-  mongodb-secondary:
-    container_name: mongodb-secondary
-    image: 'docker.io/bitnami/mongodb:4.4-debian-10'
-    depends_on:
-      - mongodb-primary
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-secondary
-      - MONGODB_REPLICA_SET_MODE=secondary
-      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
-    networks:
-      - main
-
-  mongodb-arbiter:
-    container_name: mongodb-arbiter
-    image: 'docker.io/bitnami/mongodb:4.4-debian-10'
-    depends_on:
-      - mongodb-primary
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-arbiter
-      - MONGODB_REPLICA_SET_MODE=arbiter
-      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+  react-go-todo-redis:
+    image: redis:7.2
+    container_name: react-go-todo-redis
+    expose:
+    - "9876"
+    ports:
+      - "9876:9876"
+    volumes:
+      - redis-data:/data
     networks:
       - main
 
 networks:
   main:
+
+volumes:
+  mysql-data:
+  redis-data:
