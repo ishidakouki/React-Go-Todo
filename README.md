@@ -200,3 +200,7 @@ curl -i --request GET 'http://localhost:3001/v1/transfers'
 ## License
 Copyright © 2020 [GSabadini](https://github.com/GSabadini).
 This project is [MIT](LICENSE) licensed.
+
+
+## 環境変数適用時
+direnv allow
